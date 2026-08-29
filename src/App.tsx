@@ -1,30 +1,39 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import Home from './pages/Home'
+import Contact from './pages/Contact'
+
+export type Page = 'home' | 'contact'
+
+const pathByPage: Record<Page, string> = {
+  home: '/',
+  contact: '/contato',
+}
+
+function getPageFromPath(pathname: string): Page {
+  return pathname === pathByPage.contact ? 'contact' : 'home'
+}
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [page, setPage] = useState<Page>(() => getPageFromPath(window.location.pathname))
 
-  return (
-    <>
-      <h1 className="text-3xl font-bold underline">Hello Tailwind</h1>
-      <div className="flex justify-center w-full">
-        <button
-          type="button"
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
+  useEffect(() => {
+    const handlePopState = () => setPage(getPageFromPath(window.location.pathname))
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
 
-        <button
-          type="button"
-          className="ml-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-          onClick={() => setCount(0)}
-        >
-          Reset Count
-        </button>
-      </div>
-    </>
-  )
+  const navigate = (nextPage: Page) => {
+    if (window.location.pathname !== pathByPage[nextPage]) {
+      window.history.pushState(null, '', pathByPage[nextPage])
+    }
+    setPage(nextPage)
+  }
+
+  if (page === 'contact') {
+    return <Contact onNavigate={navigate} />
+  }
+
+  return <Home onNavigate={navigate} />
 }
 
 export default App
